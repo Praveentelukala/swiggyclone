@@ -31,10 +31,31 @@ const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/swiggy-cl
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 20000, // increased timeout to 20 seconds
 })
 .then(() => console.log('MongoDB connected successfully'))
 .catch((err) => console.error('MongoDB connection error:', err));
+
+const db = mongoose.connection;
+
+db.on('connected', () => {
+  console.log('Mongoose default connection is open');
+});
+
+db.on('error', (err) => {
+  console.error('Mongoose default connection error:', err);
+});
+
+db.on('disconnected', () => {
+  console.log('Mongoose default connection is disconnected');
+});
+
+// Optional: handle process termination to close mongoose connection gracefully
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  console.log('Mongoose default connection disconnected through app termination');
+  process.exit(0);
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
